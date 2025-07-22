@@ -37,7 +37,7 @@ Retrieves specific technical indicators by name.
 
 **Example usage:**
 ```python
-await get_specific_indicators("AAPL", indicators=["RSI", "MACD"], exchange="NASDAQ")
+await get_specific_indicators("AAPL", indicators=["RSI", "MACD.macd", "EMA20"], exchange="NASDAQ")
 ```
 
 ## Available Resources
@@ -63,14 +63,51 @@ Common exchanges include:
 - Weeks: 1w
 - Months: 1M
 
-## Common Indicators Returned
+## Available Indicators
 
-The server returns various technical indicators including:
-- Trend: EMA, SMA, MACD, ADX
-- Momentum: RSI, Stochastic, CCI, Williams %R
-- Volatility: Bollinger Bands, ATR
-- Volume: OBV, Volume
-- And many more
+The server returns a comprehensive set of technical indicators. When using `get_specific_indicators`, you can request any of these by their key names:
+
+### Moving Averages
+- `EMA10`, `EMA20`, `EMA30`, `EMA50`, `EMA100`, `EMA200`: Exponential Moving Averages
+- `SMA10`, `SMA20`, `SMA30`, `SMA50`, `SMA100`, `SMA200`: Simple Moving Averages
+- `HullMA9`: Hull Moving Average
+- `VWMA`: Volume Weighted Moving Average
+
+### Momentum Indicators
+- `RSI`: Relative Strength Index (current and [1] for previous)
+- `Stoch.K`, `Stoch.D`: Stochastic Oscillator K and D values
+- `Stoch.RSI.K`: Stochastic RSI
+- `CCI20`: Commodity Channel Index
+- `Mom`: Momentum indicator
+- `UO`: Ultimate Oscillator
+- `W.R`: Williams %R
+
+### Trend Indicators
+- `ADX`: Average Directional Index
+- `ADX+DI`, `ADX-DI`: Directional Movement indicators
+- `MACD.macd`, `MACD.signal`: MACD line and signal line
+- `AO`: Awesome Oscillator
+
+### Other Indicators
+- `BBPower`: Bollinger Bands Power
+- `Ichimoku.BLine`: Ichimoku Base Line
+- `close`: Current close price
+
+### Pivot Points
+Multiple pivot point calculations are available:
+- `Pivot.M.Classic.*`: Classic pivot points (R1-R3, S1-S3, Middle)
+- `Pivot.M.Fibonacci.*`: Fibonacci pivot points
+- `Pivot.M.Camarilla.*`: Camarilla pivot points
+- `Pivot.M.Woodie.*`: Woodie's pivot points
+- `Pivot.M.Demark.*`: Demark pivot points
+
+### Recommendations
+- `Recommend.All`: Overall recommendation score
+- `Recommend.MA`: Moving average recommendation
+- `Recommend.Other`: Other indicators recommendation
+- `Rec.*`: Individual indicator recommendations (BBPower, HullMA9, Ichimoku, etc.)
+
+**Note**: Historical values are available using `[1]`, `[2]` suffixes for previous periods.
 
 ## Usage Guidelines
 
@@ -102,7 +139,7 @@ When users ask about technical indicators, you can use these patterns:
    → Use `get_indicators("BTCUSD")`
 
 2. "Show me the RSI and MACD for Apple stock"
-   → Use `get_specific_indicators("AAPL", indicators=["RSI", "MACD"], exchange="NASDAQ")`
+   → Use `get_specific_indicators("AAPL", indicators=["RSI", "MACD.macd", "MACD.signal"], exchange="NASDAQ")`
 
 3. "Get 4-hour chart indicators for Ethereum"
    → Use `get_indicators("ETHUSD", timeframe="4h")`

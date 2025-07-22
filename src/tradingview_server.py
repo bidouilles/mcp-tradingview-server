@@ -96,7 +96,16 @@ async def get_specific_indicators(
     
     Args:
         symbol: Trading symbol (e.g., "BTCUSD", "AAPL")
-        indicators: List of specific indicators to fetch (e.g., ["RSI", "MACD", "BB"])
+        indicators: List of specific indicators to fetch. Available indicators include:
+                   - Moving Averages: "EMA10", "EMA20", "EMA50", "EMA100", "EMA200", 
+                     "SMA10", "SMA20", "SMA50", "SMA100", "SMA200", "HullMA9", "VWMA"
+                   - Momentum: "RSI", "Stoch.K", "Stoch.D", "Stoch.RSI.K", "CCI20", 
+                     "Mom", "UO", "W.R"
+                   - Trend: "ADX", "ADX+DI", "ADX-DI", "MACD.macd", "MACD.signal", "AO"
+                   - Other: "BBPower", "Ichimoku.BLine", "close"
+                   - Pivot Points: "Pivot.M.Classic.*", "Pivot.M.Fibonacci.*", etc.
+                   - Recommendations: "Recommend.All", "Recommend.MA", "Recommend.Other"
+                   Example: ["RSI", "MACD.macd", "EMA20"]
         exchange: Exchange name (default: "BINANCE")
         timeframe: Timeframe for indicators (e.g., "1h", "4h", "1d")
         export_result: Whether to export results to file (default: False)
