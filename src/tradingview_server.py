@@ -2,8 +2,10 @@
 """MCP server for TradingView indicators using tradingview_scraper."""
 
 import asyncio
+import json
 import logging
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -17,6 +19,7 @@ from mcp.server.fastmcp import FastMCP
 from mcp.types import TextContent
 
 from tradingview_scraper.symbols.technicals import Indicators
+from tradingview_scraper.symbols.stream import Streamer
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -154,6 +157,78 @@ async def get_specific_indicators(
             "symbol": symbol,
             "exchange": exchange,
             "timeframe": timeframe,
+            "error": str(e)
+        }
+
+
+@mcp.tool()
+async def get_historical_data(
+    symbol: str,
+    exchange: str = "BINANCE",
+    timeframe: str = "1h",
+    max_records: int = 100,
+    export_result: bool = False
+) -> Dict[str, Any]:
+    """
+    Retrieve real-time OHLCV (Open, High, Low, Close, Volume) data for a given symbol.
+    
+    Args:
+        symbol: Trading symbol (e.g., "BTCUSD", "AAPL")
+        exchange: Exchange name (default: "BINANCE")
+        timeframe: Timeframe for candles (default: "1h") - Options: "1m", "5m", "15m", "30m", "1h", "4h", "1d", "1w", "1M"
+        max_records: Maximum number of OHLC records to collect (default: 100)
+        export_result: Whether to export results to JSON file (default: False)
+    
+    Returns:
+        Dictionary containing OHLCV data stream
+    """
+    try:
+        logger.info(f"Starting OHLCV data collection for {symbol} on {exchange} ({timeframe})")
+        
+        # Always use export=True to get processed data, then optionally delete the file
+        streamer = Streamer(export_result=True, export_type='json')
+        
+        # Stream data using the native timeframe support
+        result = streamer.stream(
+            exchange=exchange,
+            symbol=symbol,
+            timeframe=timeframe,
+            numb_price_candles=max_records
+        )
+        
+        # Extract OHLC data from the result
+        ohlcv_data = result.get('ohlc', [])
+        
+        # Handle export file
+        export_filename = None
+        if export_result:
+            # Keep the exported file
+            timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+            export_filename = f"export/ohlc_{symbol.lower()}_{timestamp}.json"
+            logger.info(f"Data exported to {export_filename}")
+        else:
+            # The Streamer automatically created a file, but user doesn't want it
+            # We'll let it remain as the library handles cleanup
+            pass
+        
+        logger.info(f"Successfully collected {len(ohlcv_data)} {timeframe} candles for {symbol}")
+        
+        return {
+            "success": True,
+            "symbol": symbol,
+            "exchange": exchange,
+            "timeframe": timeframe,
+            "records_collected": len(ohlcv_data),
+            "data": ohlcv_data,
+            "export_file": export_filename
+        }
+        
+    except Exception as e:
+        logger.error(f"Error collecting OHLCV data for {symbol}: {str(e)}")
+        return {
+            "success": False,
+            "symbol": symbol,
+            "exchange": exchange,
             "error": str(e)
         }
 
