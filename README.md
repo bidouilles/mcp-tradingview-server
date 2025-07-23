@@ -19,7 +19,7 @@ graph TB
         end
         
         subgraph Resources
-            RES[indicators/{symbol}]
+            RES["indicators/{symbol}"]
         end
     end
     
@@ -218,7 +218,7 @@ graph TD
         GI[get_indicators]
         GSI[get_specific_indicators]
         GHD[get_historical_data]
-        Resource[indicators/{symbol}]
+        Resource["indicators/{symbol}"]
     end
     
     subgraph Sources["📡 Data Sources"]
@@ -311,18 +311,18 @@ sequenceDiagram
     participant WS as TradingView WebSocket
     participant Export as Export Directory
 
-    Claude->>+Tool: get_historical_data(<br/>symbol="BTCUSD",<br/>timeframe="4h",<br/>max_records=10)
+    Claude->>+Tool: get_historical_data<br/>symbol=BTCUSD<br/>timeframe=4h<br/>max_records=10
     
     Tool->>+Stream: Streamer(export_result=True)
     
-    Stream->>+Converter: OHLCVConverter(target_timeframe="4h")
+    Stream->>+Converter: OHLCVConverter<br/>target_timeframe=4h
     Converter-->>-Stream: timeframe validation ✓
     
     Stream->>+WS: WebSocket connection
-    Stream->>WS: create_series(timeframe="1m", records=10)
+    Stream->>WS: create_series<br/>timeframe=1m, records=10
     WS-->>-Stream: 1-minute OHLCV data stream
     
-    Stream->>+Converter: convert(1m_data, target="4h")
+    Stream->>+Converter: convert 1m data to 4h
     Note over Converter: Efficiently aggregates:<br/>• High = max(highs)<br/>• Low = min(lows)<br/>• Open = first open<br/>• Close = last close<br/>• Volume = sum(volumes)
     Converter-->>-Stream: aggregated 4h candles
     
@@ -331,9 +331,9 @@ sequenceDiagram
         Export-->>-Stream: file saved
     end
     
-    Stream-->>-Tool: {"ohlc": [...], "indicator": [...]}
+    Stream-->>-Tool: ohlc and indicator data
     
-    Tool-->>-Claude: {<br/>"success": true,<br/>"timeframe": "4h",<br/>"records_collected": 10,<br/>"data": [...],<br/>"export_file": "..."<br/>}
+    Tool-->>-Claude: Response with success,<br/>timeframe, records count,<br/>data array, and export file
     
     Note over WS: Real-time streaming<br/>avoids historical API limits
 ```
