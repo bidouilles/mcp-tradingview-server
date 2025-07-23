@@ -11,52 +11,54 @@ This MCP server provides access to TradingView technical indicators and historic
 
 ## Claude Workflow
 
-```plantuml
-@startuml
-!theme plain
-skinparam backgroundColor #FFFFFF
-
-title Claude AI Trading Analysis Workflow
-
-start
-
-:User asks about trading analysis;
-
-if (Need historical price data?) then (yes)
-    :Use get_historical_data;
-    :Specify timeframe and records;
-    :Stream OHLCV data;
-else (no)
-    if (Need specific indicators?) then (yes)
-        :Use get_specific_indicators;
-        :Filter to requested indicators;
-        :(RSI, MACD, Bollinger Bands, etc.);
-    else (no)
-        :Use get_indicators;
-        :Get all available indicators;
-        :Comprehensive technical analysis;
-    endif
-endif
-
-:Process and analyze data;
-
-if (Export data needed?) then (yes)
-    :Set export_result=True;
-    :Generate JSON file;
-    :Provide file location;
-endif
-
-:Provide analysis and interpretation;
-:Include trading recommendations;
-:Explain technical signals;
-
-stop
-
-note right : Always use full trading pairs\nfor crypto (BTCUSD, not BTC)
-
-note left : Choose appropriate timeframe:\n• 1m-15m: Scalping\n• 30m-1h: Day trading\n• 4h-1d: Swing trading\n• 1w-1M: Long-term
-@enduml
+```mermaid
+flowchart TD
+    Start([User asks about trading analysis]) --> Question{Need historical price data?}
+    
+    Question -->|Yes| Historical[Use get_historical_data]
+    Historical --> Timeframe[Specify timeframe and records]
+    Timeframe --> Stream[Stream OHLCV data]
+    
+    Question -->|No| Specific{Need specific indicators?}
+    Specific -->|Yes| SpecificTool[Use get_specific_indicators]
+    SpecificTool --> Filter[Filter to requested indicators<br/>RSI, MACD, Bollinger Bands, etc.]
+    
+    Specific -->|No| All[Use get_indicators]
+    All --> Comprehensive[Get all available indicators<br/>Comprehensive technical analysis]
+    
+    Stream --> Process[Process and analyze data]
+    Filter --> Process
+    Comprehensive --> Process
+    
+    Process --> Export{Export data needed?}
+    Export -->|Yes| SetExport[Set export_result=True]
+    SetExport --> GenFile[Generate JSON file]
+    GenFile --> FileLocation[Provide file location]
+    FileLocation --> Analysis
+    
+    Export -->|No| Analysis[Provide analysis and interpretation]
+    Analysis --> Recommendations[Include trading recommendations]
+    Recommendations --> Signals[Explain technical signals]
+    Signals --> End([Complete])
+    
+    classDef startEnd fill:#e8f5e8
+    classDef decision fill:#fff3e0
+    classDef process fill:#e3f2fd
+    classDef tool fill:#f3e5f5
+    
+    class Start,End startEnd
+    class Question,Specific,Export decision
+    class Process,Analysis,Recommendations,Signals process
+    class Historical,SpecificTool,All tool
 ```
+
+> **📝 Best Practices:**
+> - **Crypto Symbols**: Always use full trading pairs (BTCUSD, not BTC)
+> - **Timeframe Selection**:
+>   - 1m-15m: Scalping
+>   - 30m-1h: Day trading  
+>   - 4h-1d: Swing trading
+>   - 1w-1M: Long-term analysis
 
 ## Available Tools
 

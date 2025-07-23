@@ -4,56 +4,59 @@ An MCP (Model Context Protocol) server that provides access to TradingView techn
 
 ## Architecture
 
-```plantuml
-@startuml
-!theme plain
-skinparam backgroundColor #FFFFFF
-skinparam componentStyle rectangle
-
-title MCP TradingView Server Architecture
-
-actor "Claude Desktop" as Claude
-component "MCP TradingView Server" as Server {
-    component "FastMCP" as MCP
-    component "Tools" as Tools {
-        [get_indicators]
-        [get_specific_indicators] 
-        [get_historical_data]
-    }
-    component "Resources" as Resources {
-        [indicators/{symbol}]
-    }
-}
-
-component "TradingView Scraper Library" as Library {
-    component "Indicators" as Ind
-    component "Streamer" as Stream
-    component "OHLCVConverter" as Converter
-}
-
-cloud "TradingView API" as TV {
-    database "Technical Indicators" as TechInd
-    database "Real-time OHLCV Data" as OHLCV
-}
-
-folder "Export Directory" as Export {
-    file "JSON Files" as JSON
-}
-
-Claude --> MCP : MCP Protocol
-MCP --> Tools : Tool Calls
-MCP --> Resources : Resource Access
-Tools --> Ind : Technical Analysis
-Tools --> Stream : Historical Data
-Stream --> Converter : Timeframe Conversion
-Ind --> TechInd : API Requests
-Stream --> OHLCV : WebSocket Stream
-Tools --> JSON : Export Data (optional)
-
-note right of Stream : Native timeframe support\navoids over-collection
-note right of Converter : Aggregates 1m data to\nrequested timeframes
-@enduml
+```mermaid
+graph TB
+    Claude[Claude Desktop] --> MCP[FastMCP Server]
+    
+    subgraph Server["MCP TradingView Server"]
+        MCP --> Tools[Tools]
+        MCP --> Resources[Resources]
+        
+        subgraph Tools
+            GI[get_indicators]
+            GSI[get_specific_indicators]
+            GHD[get_historical_data]
+        end
+        
+        subgraph Resources
+            RES[indicators/{symbol}]
+        end
+    end
+    
+    subgraph Library["TradingView Scraper Library"]
+        Ind[Indicators]
+        Stream[Streamer]
+        Converter[OHLCVConverter]
+    end
+    
+    subgraph TV["TradingView API"]
+        TechInd[(Technical Indicators)]
+        OHLCV[(Real-time OHLCV Data)]
+    end
+    
+    subgraph Export["Export Directory"]
+        JSON[JSON Files]
+    end
+    
+    Tools --> Ind
+    Tools --> Stream
+    Stream --> Converter
+    Ind --> TechInd
+    Stream --> OHLCV
+    Tools --> JSON
+    
+    classDef cloud fill:#e1f5fe
+    classDef database fill:#f3e5f5
+    classDef file fill:#e8f5e8
+    classDef component fill:#fff3e0
+    
+    class TV cloud
+    class TechInd,OHLCV database
+    class JSON file
+    class Server,Library,Tools,Resources component
 ```
+
+> **Note**: The Streamer class provides native timeframe support, avoiding over-collection of data. The OHLCVConverter efficiently aggregates 1-minute data to requested timeframes when needed.
 
 ## Features
 
@@ -205,66 +208,61 @@ Once configured, you can use these prompts in Claude Desktop:
 
 ### Tool Interaction Overview
 
-```plantuml
-@startuml
-!theme plain
-skinparam backgroundColor #FFFFFF
-
-title MCP TradingView Server - Tool Interactions
-
-usecase "Technical Analysis" as TA
-usecase "Historical Data" as HD  
-usecase "Resource Access" as RA
-
-actor "Trader/Analyst" as User
-
-rectangle "MCP Tools" {
-    usecase "get_indicators" as GI
-    usecase "get_specific_indicators" as GSI
-    usecase "get_historical_data" as GHD
-    usecase "indicators/{symbol}" as Resource
-}
-
-rectangle "Data Sources" {
-    database "TradingView\nTechnical Indicators" as TVTI
-    database "TradingView\nReal-time Stream" as TVRT
-}
-
-rectangle "Output Formats" {
-    file "JSON Export" as JSON
-    note "Console Output" as Console
-    note "MCP Response" as MCP
-}
-
-User --> TA : "Analyze BTCUSD"
-User --> HD : "Get 4h candles"
-User --> RA : "Quick indicator check"
-
-TA --> GI : All indicators
-TA --> GSI : Specific indicators\n(RSI, MACD, etc.)
-
-HD --> GHD : OHLCV data\nwith timeframes
-
-RA --> Resource : Text-based\nindicator summary
-
-GI --> TVTI : Fetch all technical data
-GSI --> TVTI : Fetch filtered data
-GHD --> TVRT : Stream OHLCV data
-Resource --> TVTI : Quick access
-
-GI --> Console : Indicator values
-GSI --> Console : Filtered results
-GHD --> JSON : Historical data
-GHD --> Console : OHLC summary
-Resource --> MCP : Formatted text
-
-note right of GHD : Supports all timeframes:\n1m, 5m, 15m, 30m\n1h, 2h, 4h\n1d, 1w, 1M
-
-note right of GSI : Efficient filtering:\nOnly requested indicators\nreturned to reduce overhead
-
-note bottom of TVRT : WebSocket streaming\nfor real-time data\nwith native timeframe support
-@enduml
+```mermaid
+graph TD
+    User[👤 Trader/Analyst] --> TA[📊 Technical Analysis]
+    User --> HD[📈 Historical Data]
+    User --> RA[⚡ Resource Access]
+    
+    subgraph Tools["🛠️ MCP Tools"]
+        GI[get_indicators]
+        GSI[get_specific_indicators]
+        GHD[get_historical_data]
+        Resource[indicators/{symbol}]
+    end
+    
+    subgraph Sources["📡 Data Sources"]
+        TVTI[(TradingView<br/>Technical Indicators)]
+        TVRT[(TradingView<br/>Real-time Stream)]
+    end
+    
+    subgraph Outputs["📤 Output Formats"]
+        JSON[📄 JSON Export]
+        Console[🖥️ Console Output]
+        MCP_OUT[📋 MCP Response]
+    end
+    
+    TA --> GI
+    TA --> GSI
+    HD --> GHD
+    RA --> Resource
+    
+    GI --> TVTI
+    GSI --> TVTI
+    GHD --> TVRT
+    Resource --> TVTI
+    
+    GI --> Console
+    GSI --> Console
+    GHD --> JSON
+    GHD --> Console
+    Resource --> MCP_OUT
+    
+    classDef userAction fill:#e3f2fd
+    classDef tool fill:#f3e5f5
+    classDef source fill:#e8f5e8
+    classDef output fill:#fff3e0
+    
+    class TA,HD,RA userAction
+    class GI,GSI,GHD,Resource tool
+    class TVTI,TVRT source
+    class JSON,Console,MCP_OUT output
 ```
+
+> **Key Features:**
+> - **GHD (get_historical_data)**: Supports all timeframes (1m, 5m, 15m, 30m, 1h, 2h, 4h, 1d, 1w, 1M)
+> - **GSI (get_specific_indicators)**: Efficient filtering - only requested indicators returned
+> - **TVRT**: WebSocket streaming for real-time data with native timeframe support
 
 ### Available Tools
 
@@ -304,57 +302,40 @@ Parameters:
 
 ### Historical Data Flow
 
-```plantuml
-@startuml
-!theme plain
-skinparam backgroundColor #FFFFFF
+```mermaid
+sequenceDiagram
+    participant Claude as Claude Desktop
+    participant Tool as get_historical_data
+    participant Stream as Streamer
+    participant Converter as OHLCVConverter
+    participant WS as TradingView WebSocket
+    participant Export as Export Directory
 
-title Historical Data Collection Process
-
-participant "Claude Desktop" as Claude
-participant "get_historical_data" as Tool
-participant "Streamer" as Stream
-participant "OHLCVConverter" as Converter
-participant "TradingView WebSocket" as WS
-participant "Export Directory" as Export
-
-Claude -> Tool : get_historical_data(\n  symbol="BTCUSD",\n  timeframe="4h",\n  max_records=10\n)
-
-activate Tool
-Tool -> Stream : Streamer(export_result=True)
-activate Stream
-
-Stream -> Converter : OHLCVConverter(target_timeframe="4h")
-activate Converter
-Converter -> Stream : timeframe validation ✓
-deactivate Converter
-
-Stream -> WS : WebSocket connection
-activate WS
-Stream -> WS : create_series(timeframe="1m", records=10)
-WS -> Stream : 1-minute OHLCV data stream
-deactivate WS
-
-Stream -> Converter : convert(1m_data, target="4h")
-activate Converter
-Converter -> Stream : aggregated 4h candles
-deactivate Converter
-
-Stream -> Export : save JSON file (if export=true)
-activate Export
-Export -> Stream : file saved
-deactivate Export
-
-Stream -> Tool : {"ohlc": [...], "indicator": [...]}
-deactivate Stream
-
-Tool -> Claude : {\n  "success": true,\n  "timeframe": "4h",\n  "records_collected": 10,\n  "data": [...],\n  "export_file": "..."\n}
-deactivate Tool
-
-note right of Converter : Efficiently aggregates:\n• High = max(highs)\n• Low = min(lows)\n• Open = first open\n• Close = last close\n• Volume = sum(volumes)
-
-note right of WS : Real-time streaming\navoids historical API limits
-@enduml
+    Claude->>+Tool: get_historical_data(<br/>symbol="BTCUSD",<br/>timeframe="4h",<br/>max_records=10)
+    
+    Tool->>+Stream: Streamer(export_result=True)
+    
+    Stream->>+Converter: OHLCVConverter(target_timeframe="4h")
+    Converter-->>-Stream: timeframe validation ✓
+    
+    Stream->>+WS: WebSocket connection
+    Stream->>WS: create_series(timeframe="1m", records=10)
+    WS-->>-Stream: 1-minute OHLCV data stream
+    
+    Stream->>+Converter: convert(1m_data, target="4h")
+    Note over Converter: Efficiently aggregates:<br/>• High = max(highs)<br/>• Low = min(lows)<br/>• Open = first open<br/>• Close = last close<br/>• Volume = sum(volumes)
+    Converter-->>-Stream: aggregated 4h candles
+    
+    alt export_result=true
+        Stream->>+Export: save JSON file
+        Export-->>-Stream: file saved
+    end
+    
+    Stream-->>-Tool: {"ohlc": [...], "indicator": [...]}
+    
+    Tool-->>-Claude: {<br/>"success": true,<br/>"timeframe": "4h",<br/>"records_collected": 10,<br/>"data": [...],<br/>"export_file": "..."<br/>}
+    
+    Note over WS: Real-time streaming<br/>avoids historical API limits
 ```
 
 Returns:
